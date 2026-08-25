@@ -179,3 +179,14 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# =========================
+# Bot Envoie CV Specific
+# =========================
+# Ignorer la base de données locale (SQLite)
+database.db
+
+# Ignorer les fichiers (CV, Lettre de Motivation) uploadés dans les catégories
+data/categories/*
+!data/categories/.gitkeep
+PROJECT_CONTEXT.md

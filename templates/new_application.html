@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Nouvelle Candidature</h2>
+
+<div class="glass-container">
+    {% if not categories %}
+        <p style="color: var(--warning-color);">Veuillez d'abord créer une catégorie dans l'administration.</p>
+    {% else %}
+    <form action="{{ url_for('new_application') }}" method="POST">
+        <label>Catégorie</label>
+        <select name="category_id" id="category_select" required>
+            <option value="">-- Sélectionnez une catégorie --</option>
+            {% for cat in categories %}
+                <option value="{{ cat.id }}" data-body="{{ cat.email_body }}">{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        
+        <label>Sujet de l'email</label>
+        <input type="text" name="email_subject" value="Candidature" required>
+
+        <label>Corps de l'email personnalisé (modifiez si besoin, sera appliqué à toutes les candidatures de cet envoi)</label>
+        <textarea name="custom_email_body" id="custom_email_body" rows="6" required></textarea>
+        
+        <hr style="border-color: var(--border-color); margin: 30px 0;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Destinataires</h3>
+            <button type="button" class="btn btn-secondary" onclick="addRow()">+ Ajouter un destinataire</button>
+        </div>
+        
+        <div id="recipients_container">
+            <div class="recipient-row" style="display: flex; gap: 15px; margin-bottom: 15px;">
+                <input type="text" name="company_name[]" placeholder="Nom de l'entreprise" required>
+                <input type="text" name="contact_name[]" placeholder="Nom du contact (ex: M. Dupont)">
+                <input type="email" name="contact_email[]" placeholder="Email (ex: contact@entreprise.com)" required>
+                <button type="button" class="btn btn-secondary" onclick="this.parentElement.remove()" style="padding: 10px;">X</button>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn" style="width: 100%; margin-top: 20px;">🚀 Envoyer les candidatures</button>
+    </form>
+    {% endif %}
+</div>
+
+<script>
+    document.getElementById('category_select').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const bodyText = selectedOption.getAttribute('data-body') || '';
+        document.getElementById('custom_email_body').value = bodyText;
+    });
+
+    function addRow() {
+        const container = document.getElementById('recipients_container');
+        const row = document.createElement('div');
+        row.className = 'recipient-row';
+        row.style.cssText = 'display: flex; gap: 15px; margin-bottom: 15px;';
+        
+        row.innerHTML = `
+            <input type="text" name="company_name[]" placeholder="Nom de l'entreprise" required>
+            <input type="text" name="contact_name[]" placeholder="Nom du contact (ex: M. Dupont)">
+            <input type="email" name="contact_email[]" placeholder="Email (ex: contact@entreprise.com)" required>
+            <button type="button" class="btn btn-secondary" onclick="this.parentElement.remove()" style="padding: 10px;">X</button>
+        `;
+        container.appendChild(row);
+    }
+</script>
+{% endblock %}

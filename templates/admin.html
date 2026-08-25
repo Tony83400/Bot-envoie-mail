@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Administration des Catégories</h2>
+
+<div class="glass-container">
+    <h3>Créer une nouvelle catégorie</h3>
+    <form action="{{ url_for('admin') }}" method="POST" enctype="multipart/form-data">
+        <label>Nom de la catégorie (ex: Développeur Web)</label>
+        <input type="text" name="name" required placeholder="Nom de la catégorie">
+        
+        <label>Corps du mail par défaut</label>
+        <textarea name="email_body" rows="6" placeholder="Bonjour {contact_name},\n\nSuite à votre annonce..." required></textarea>
+        <small style="color: var(--text-secondary); display: block; margin-top: -15px; margin-bottom: 15px;">Utilisez <b>{contact_name}</b> et <b>{company_name}</b> pour que le bot les remplace dynamiquement.</small>
+        
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+                <label>CV (PDF)</label>
+                <input type="file" name="cv_file" accept=".pdf">
+            </div>
+            <div style="flex: 1;">
+                <label>Lettre de Motivation (PDF)</label>
+                <input type="file" name="lm_file" accept=".pdf">
+            </div>
+        </div>
+        
+        <button type="submit" class="btn">Créer la catégorie</button>
+    </form>
+</div>
+
+<h3>Catégories existantes</h3>
+{% if categories %}
+    {% for cat in categories %}
+    <div class="glass-container" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1;">
+                <h4 style="margin-top: 0; color: var(--primary-color);">{{ cat.name }}</h4>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Dossier : {{ cat.folder_path }}</p>
+                <p><strong>Fichiers liés :</strong> 
+                    {% if cat.files %}
+                        {{ cat.files | join(', ') }}
+                    {% else %}
+                        <span style="color: var(--warning-color);">Aucun fichier</span>
+                    {% endif %}
+                </p>
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="toggleEdit('edit-{{ cat.id }}')">Modifier</button>
+        </div>
+        
+        <!-- Formulaire de modification caché -->
+        <div id="edit-{{ cat.id }}" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+            <form action="{{ url_for('edit_category', category_id=cat.id) }}" method="POST" enctype="multipart/form-data">
+                <label>Nom de la catégorie</label>
+                <input type="text" name="name" value="{{ cat.name }}" required>
+                
+                <label>Corps du mail par défaut</label>
+                <textarea name="email_body" rows="6" required>{{ cat.email_body }}</textarea>
+                
+                <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label>Remplacer CV (Optionnel, PDF)</label>
+                        <input type="file" name="cv_file" accept=".pdf">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Remplacer Lettre de Motivation (Optionnel, PDF)</label>
+                        <input type="file" name="lm_file" accept=".pdf">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn">Enregistrer les modifications</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <p style="color: var(--text-secondary);">Aucune catégorie. Créez-en une pour commencer.</p>
+{% endif %}
+
+<script>
+function toggleEdit(id) {
+    const el = document.getElementById(id);
+    if (el.style.display === 'none') {
+        el.style.display = 'block';
+    } else {
+        el.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
