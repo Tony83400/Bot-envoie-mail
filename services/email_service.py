@@ -53,15 +53,56 @@ def check_for_replies(app_context):
         
     replied_count = 0
     
-    with app_context:
+    with app_context.app_context():
         pending_apps = Application.query.filter_by(status='En attente').all()
 
         for app in pending_apps:
-            # Cherche les emails venant du contact
-            status, data = mail.search(None, f'FROM "{app.contact_email}"')
+            # Création manuelle de la date au format IMAP (DD-Mon-YYYY en anglais) pour éviter les erreurs de locale
+            months = {1:"Jan", 2:"Feb", 3:"Mar", 4:"Apr", 5:"May", 6:"Jun", 7:"Jul", 8:"Aug", 9:"Sep", 10:"Oct", 11:"Nov", 12:"Dec"}
+            date_str = f"{app.date_sent.day:02d}-{months[app.date_sent.month]}-{app.date_sent.year}"
+            
+            # Recherche des mails depuis la date d'envoi
+            status, data = mail.search(None, f'FROM "{app.contact_email}" SINCE {date_str}')
+            
             if status == 'OK' and data[0]:
-                app.status = 'Répondu'
-                replied_count += 1
+                mail_ids = data[0].split()
+                
+                # On vérifie les mails trouvés en partant du plus récent
+                for email_id in reversed(mail_ids):
+                    res, msg_data = mail.fetch(email_id, '(RFC822)')
+                    if res == 'OK':
+                        raw_email = msg_data[0][1]
+                        import email
+                        from email.utils import parsedate_to_datetime
+                        from datetime import timezone
+                        
+                        msg = email.message_from_bytes(raw_email)
+                        
+                        if 'Date' in msg:
+                            msg_date = parsedate_to_datetime(msg['Date'])
+                            # Convertir la date du mail en UTC Naive pour la comparer à la BDD
+                            msg_date_utc = msg_date.astimezone(timezone.utc).replace(tzinfo=None)
+                            
+                            # Si le mail a bien été reçu STRICTEMENT APRES l'envoi de la candidature
+                            if msg_date_utc > app.date_sent:
+                                body = ""
+                                if msg.is_multipart():
+                                    for part in msg.walk():
+                                        if part.get_content_type() == "text/plain":
+                                            payload = part.get_payload(decode=True)
+                                            if payload:
+                                                body = payload.decode(errors='ignore')
+                                            break
+                                else:
+                                    payload = msg.get_payload(decode=True)
+                                    if payload:
+                                        body = payload.decode(errors='ignore')
+                                
+                                # Stocker l'extrait
+                                app.reply_body = body[:1000].strip() if body else "Pas de texte détecté."
+                                app.status = 'Répondu'
+                                replied_count += 1
+                                break # On arrête la recherche pour cette candidature car on a trouvé la réponse
                 
         if replied_count > 0:
             db.session.commit()

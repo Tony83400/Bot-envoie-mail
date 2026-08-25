@@ -23,3 +23,4 @@ class Application(db.Model):
     date_sent = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(50), default='En attente') # En attente, Répondu, Relancé
     email_subject = db.Column(db.String(255), nullable=False)
+    reply_body = db.Column(db.Text, nullable=True)

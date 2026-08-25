@@ -33,8 +33,20 @@
                         <span class="status {{ app.status|lower|replace(' ', '-') }}">
                             {{ app.status }}
                         </span>
+                        {% if app.status == 'Répondu' %}
+                        <br>
+                        <a href="https://mail.google.com/mail/u/0/#search/from%3A{{ app.contact_email }}" target="_blank" style="color: var(--secondary-color); font-size: 0.8rem; text-decoration: none;">🔗 Voir sur Gmail</a>
+                        {% endif %}
                     </td>
                 </tr>
+                {% if app.reply_body %}
+                <tr style="background: rgba(255,255,255,0.02);">
+                    <td colspan="6" style="padding: 10px 20px; font-size: 0.9rem; color: var(--text-secondary); border-bottom: 2px solid var(--border-color);">
+                        <strong>Extrait de la réponse :</strong><br>
+                        <div style="white-space: pre-wrap; margin-top: 5px; max-height: 100px; overflow-y: auto;">{{ app.reply_body }}</div>
+                    </td>
+                </tr>
+                {% endif %}
                 {% endfor %}
             </tbody>
         </table>
